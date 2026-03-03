@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Minimal Calendar</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+        :root {
+            /* 색상 설정 */
+            --bg-color: #A7C7E7; /* 연한 하늘색 (파스텔톤) */
+            --text-color: #FFFFFF; /* 흰색 글씨 */
+            --today-bg: #FFFFFF; /* 당일 바탕색 (흰색) */
+            --today-text: #A7C7E7; /* 당일 글씨색 (하늘색) */
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .calendar {
+            width: 100%;
+            max-width: 320px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .days-of-week, .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .days-of-week div {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .day-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 35px;
+            width: 35px;
+            margin: 0 auto;
+            border-radius: 50%; /* 동그라미 모양 */
+            font-size: 0.85rem;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .day-link:hover {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+
+        /* 당일 (활성화된 영역) 스타일 */
+        .day-link.today {
+            background-color: var(--today-bg);
+            color: var(--today-text);
+            font-weight: 700;
+        }
+
+        .day-link.empty {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calendar">
+        <div class="header" id="month-year"></div>
+        <div class="days-of-week">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        </div>
+        <div class="days-grid" id="days"></div>
+    </div>
+
+    <script>
+        // ★ 중요: 이동하고 싶은 노션 데이터베이스의 공유 링크를 아래에 붙여넣으세요.
+        const NOTION_DB_LINK = "https://www.notion.so/사용자의_노션_데이터베이스_링크_여기에_입력";
+
+        function renderCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+
+            document.getElementById('month-year').innerText = `${year}. ${String(month + 1).padStart(2, '0')}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysContainer = document.getElementById('days');
+            
+            daysContainer.innerHTML = '';
+
+            // 1일 시작 전 빈 칸 채우기
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'day-link empty';
+                daysContainer.appendChild(emptyDiv);
+            }
+
+            // 날짜 렌더링
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayLink = document.createElement('a');
+                dayLink.href = NOTION_DB_LINK;
+                dayLink.target = "_blank"; // 새 창에서 노션 DB 열기
+                dayLink.className = 'day-link';
+                dayLink.innerText = i;
+
+                // 오늘 날짜 하이라이트
+                if (i === today) {
+                    dayLink.classList.add('today');
+                }
+
+                daysContainer.appendChild(dayLink);
+            }
+        }
+
+        renderCalendar();
+
+        // 1분마다 체크하여 자정이 지나 날짜가 바뀌면 캘린더 자동 업데이트
+        setInterval(() => {
+            const currentDay = new Date().getDate();
+            const displayedDay = parseInt(document.querySelector('.today')?.innerText);
+            if(currentDay !== displayedDay) {
+                renderCalendar();
+            }
+        }, 60000); 
+    </script>
+</body>
+</html>
