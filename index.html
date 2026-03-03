@@ -14,6 +14,7 @@
             --text-color: #FFFFFF; /* 흰 글씨 */
             --today-bg: #FFFFFF; /* 당일 활성화 바탕 (흰색) */
             --today-text: #A7C7E7; /* 당일 활성화 글씨 (하늘색) */
+            --cell-size: 36px; /* 모든 칸(요일, 날짜)의 고정 크기 */
         }
 
         body {
@@ -30,7 +31,7 @@
 
         .calendar {
             width: 100%;
-            max-width: 300px; /* 미니멀한 사이즈 */
+            max-width: 320px; /* 고정 크기 그리드에 맞게 사이즈 소폭 조정 */
             padding: 20px;
             box-sizing: border-box;
         }
@@ -75,35 +76,37 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            justify-items: center; /* 요일과 날짜의 완벽한 중앙 정렬을 위해 추가 */
+            grid-template-columns: repeat(7, var(--cell-size)); /* 각 열의 너비를 고정 */
+            gap: 6px; /* 열 간격 고정 */
+            justify-content: center; /* 그리드 전체를 달력 중앙에 배치 */
         }
 
         .day-name {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%;
+            width: var(--cell-size); /* 너비 고정 */
+            height: var(--cell-size); /* 높이 고정 */
             font-size: 0.85rem;
             font-weight: 800;
-            padding-bottom: 8px;
             border-bottom: 2px dashed rgba(255, 255, 255, 0.5); /* 실선 대신 귀여운 점선 */
             margin-bottom: 8px;
+            box-sizing: border-box;
         }
 
         .day {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 34px;
-            width: 34px;
+            width: var(--cell-size); /* 너비 고정 */
+            height: var(--cell-size); /* 높이 고정 */
             font-size: 0.95rem;
             font-weight: 600;
             text-decoration: none; /* 링크 밑줄 제거 */
             color: inherit;
             border-radius: 50%; /* 동그라미 선택 영역 */
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 통통 튀는 호버 효과 */
+            box-sizing: border-box;
         }
 
         /* 날짜에 마우스를 올렸을 때의 효과 */
@@ -181,7 +184,7 @@
 
     <script>
         // ★ 중요: 이동하고 싶은 노션 데이터베이스의 공유 링크를 아래 따옴표 안에 붙여넣으세요.
-        const NOTION_DB_LINK = "https://www.notion.so/cookieemonster/318d0a43b17580338af6de9a01bd7772?v=318d0a43b1758077a216000c5971a1e4";
+        const NOTION_DB_LINK = "https://www.notion.so/사용자의_노션_데이터베이스_링크_여기에_입력";
 
         // 현재 화면에 표시중인 연도와 월을 저장하는 변수
         let currentDisplayDate = new Date();
