@@ -4,134 +4,223 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notion Minimal Calendar</title>
+    <!-- 귀엽고 둥글둥글한 폰트 적용 (Nunito 추가) -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 
         :root {
-            /* 색상 설정 */
-            --bg-color: #A7C7E7; /* 연한 하늘색 (파스텔톤) */
-            --text-color: #FFFFFF; /* 흰색 글씨 */
-            --today-bg: #FFFFFF; /* 당일 바탕색 (흰색) */
-            --today-text: #A7C7E7; /* 당일 글씨색 (하늘색) */
+            /* 지정해주신 색상 변수 설정 */
+            --bg-color: #A7C7E7; /* 연한 하늘색 바탕 */
+            --text-color: #FFFFFF; /* 흰 글씨 */
+            --today-bg: #FFFFFF; /* 당일 활성화 바탕 (흰색) */
+            --today-text: #A7C7E7; /* 당일 활성화 글씨 (하늘색) */
         }
 
         body {
             margin: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Noto Sans KR', sans-serif;
+            font-family: 'Nunito', 'Noto Sans KR', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* 위젯으로 쓸 때 스크롤바 방지 */
         }
 
         .calendar {
             width: 100%;
-            max-width: 320px;
+            max-width: 300px; /* 미니멀한 사이즈 */
             padding: 20px;
             box-sizing: border-box;
-            text-align: center;
         }
 
         .header {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between; /* 양끝 정렬 (왼쪽 월/화살표, 오른쪽 today) */
+            align-items: center;
+            margin-bottom: 24px;
         }
 
-        .days-of-week, .days-grid {
+        .month-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #month-year {
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 1px;
+            min-width: 95px; /* 화살표 사이 간격 유지 */
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 통통 튀는 애니메이션 */
+        }
+
+        .nav-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.2) rotate(-8deg); /* 살짝 까딱하는 귀여운 효과 */
+        }
+
+        .grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 8px;
+            justify-items: center; /* 요일과 날짜의 완벽한 중앙 정렬을 위해 추가 */
         }
 
-        .days-of-week div {
-            font-size: 0.75rem;
-            font-weight: 500;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-            margin-bottom: 10px;
-        }
-
-        .day-link {
-            text-decoration: none;
-            color: inherit;
+        .day-name {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 35px;
-            width: 35px;
-            margin: 0 auto;
-            border-radius: 50%; /* 동그라미 모양 */
+            width: 100%;
             font-size: 0.85rem;
-            transition: transform 0.2s ease, opacity 0.2s ease;
+            font-weight: 800;
+            padding-bottom: 8px;
+            border-bottom: 2px dashed rgba(255, 255, 255, 0.5); /* 실선 대신 귀여운 점선 */
+            margin-bottom: 8px;
         }
 
-        .day-link:hover {
-            transform: scale(1.1);
-            opacity: 0.9;
+        .day {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 34px;
+            width: 34px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none; /* 링크 밑줄 제거 */
+            color: inherit;
+            border-radius: 50%; /* 동그라미 선택 영역 */
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 통통 튀는 호버 효과 */
+        }
+
+        /* 날짜에 마우스를 올렸을 때의 효과 */
+        .day:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: scale(1.15);
         }
 
         /* 당일 (활성화된 영역) 스타일 */
-        .day-link.today {
+        .day.today {
             background-color: var(--today-bg);
             color: var(--today-text);
-            font-weight: 700;
+            font-weight: 800;
+            /* 그림자 효과 제거됨 */
         }
 
-        .day-link.empty {
+        .day.today:hover {
+            background-color: rgba(255, 255, 255, 0.95);
+            transform: scale(1.15) translateY(-2px); /* 살짝 위로 뛰는 느낌 */
+        }
+
+        /* 빈 날짜 칸 */
+        .empty {
             pointer-events: none;
+        }
+
+        /* Today 버튼 스타일 수정 */
+        .today-btn {
+            background-color: var(--today-bg); /* 흰색 바탕 */
+            color: var(--bg-color); /* 하늘색 글씨 */
+            border: none;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            margin-left: 4px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .today-btn:hover {
+            transform: scale(1.1);
+            background-color: rgba(255, 255, 255, 0.9);
         }
     </style>
 </head>
 <body>
 
     <div class="calendar">
-        <div class="header" id="month-year"></div>
-        <div class="days-of-week">
-            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        <!-- 연도와 월, 그리고 우측 컨트롤 버튼들 -->
+        <div class="header">
+            <div class="month-controls">
+                <button id="prev-month" class="nav-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <div id="month-year"></div>
+                <button id="next-month" class="nav-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </div>
+            <button id="go-today" class="today-btn">today</button>
         </div>
-        <div class="days-grid" id="days"></div>
+        
+        <!-- 요일 -->
+        <div class="grid" id="day-names">
+            <div class="day-name">Sun</div><div class="day-name">Mon</div><div class="day-name">Tue</div>
+            <div class="day-name">Wed</div><div class="day-name">Thu</div><div class="day-name">Fri</div>
+            <div class="day-name">Sat</div>
+        </div>
+        
+        <!-- 날짜가 들어갈 그리드 -->
+        <div class="grid" id="calendar-days"></div>
     </div>
 
     <script>
-        // ★ 중요: 이동하고 싶은 노션 데이터베이스의 공유 링크를 아래에 붙여넣으세요.
+        // ★ 중요: 이동하고 싶은 노션 데이터베이스의 공유 링크를 아래 따옴표 안에 붙여넣으세요.
         const NOTION_DB_LINK = "https://www.notion.so/사용자의_노션_데이터베이스_링크_여기에_입력";
 
-        function renderCalendar() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const today = now.getDate();
+        // 현재 화면에 표시중인 연도와 월을 저장하는 변수
+        let currentDisplayDate = new Date();
+        let displayYear = currentDisplayDate.getFullYear();
+        let displayMonth = currentDisplayDate.getMonth();
 
+        function renderCalendar(year, month) {
+            const now = new Date();
+            const realYear = now.getFullYear();
+            const realMonth = now.getMonth();
+            const realToday = now.getDate();
+
+            // 달력 상단 텍스트 변경 (예: 2026. 03)
             document.getElementById('month-year').innerText = `${year}. ${String(month + 1).padStart(2, '0')}`;
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const daysContainer = document.getElementById('days');
+            const daysContainer = document.getElementById('calendar-days');
             
+            // 기존 내용 초기화
             daysContainer.innerHTML = '';
 
-            // 1일 시작 전 빈 칸 채우기
+            // 1일 시작 전 빈 칸 렌더링
             for (let i = 0; i < firstDay; i++) {
                 const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'day-link empty';
+                emptyDiv.className = 'day empty';
                 daysContainer.appendChild(emptyDiv);
             }
 
-            // 날짜 렌더링
+            // 1일부터 마지막 일까지 날짜 렌더링
             for (let i = 1; i <= daysInMonth; i++) {
                 const dayLink = document.createElement('a');
-                dayLink.href = NOTION_DB_LINK;
-                dayLink.target = "_blank"; // 새 창에서 노션 DB 열기
-                dayLink.className = 'day-link';
+                dayLink.href = NOTION_DB_LINK; // 클릭 시 이동할 링크
+                dayLink.target = "_blank";     // 새 창에서 노션 열기
+                dayLink.className = 'day';
                 dayLink.innerText = i;
 
-                // 오늘 날짜 하이라이트
-                if (i === today) {
+                // 렌더링하는 달력이 '실제 이번 달'일 때만 오늘 날짜 하이라이트
+                if (year === realYear && month === realMonth && i === realToday) {
                     dayLink.classList.add('today');
                 }
 
@@ -139,16 +228,52 @@
             }
         }
 
-        renderCalendar();
-
-        // 1분마다 체크하여 자정이 지나 날짜가 바뀌면 캘린더 자동 업데이트
-        setInterval(() => {
-            const currentDay = new Date().getDate();
-            const displayedDay = parseInt(document.querySelector('.today')?.innerText);
-            if(currentDay !== displayedDay) {
-                renderCalendar();
+        // 이전 달 버튼 클릭 이벤트
+        document.getElementById('prev-month').addEventListener('click', () => {
+            displayMonth--;
+            if (displayMonth < 0) {
+                displayMonth = 11;
+                displayYear--;
             }
-        }, 60000); 
+            renderCalendar(displayYear, displayMonth);
+        });
+
+        // 다음 달 버튼 클릭 이벤트
+        document.getElementById('next-month').addEventListener('click', () => {
+            displayMonth++;
+            if (displayMonth > 11) {
+                displayMonth = 0;
+                displayYear++;
+            }
+            renderCalendar(displayYear, displayMonth);
+        });
+
+        // today 버튼 클릭 이벤트 (오늘로 돌아가기)
+        document.getElementById('go-today').addEventListener('click', () => {
+            const now = new Date();
+            displayYear = now.getFullYear();
+            displayMonth = now.getMonth();
+            renderCalendar(displayYear, displayMonth);
+        });
+
+        // 페이지 로드 시 최초 1회 달력 그리기
+        renderCalendar(displayYear, displayMonth);
+
+        // [자동 업데이트 기능] 1분마다 체크하여 자정이 지나 날짜가 바뀌면 캘린더 자동 새로고침
+        setInterval(() => {
+            const now = new Date();
+            // 현재 화면에 표시된 달력이 '실제 이번 달'일 경우에만 자정 업데이트 확인
+            if (displayYear === now.getFullYear() && displayMonth === now.getMonth()) {
+                const currentDay = now.getDate();
+                const displayedDayElement = document.querySelector('.day.today');
+                
+                if (displayedDayElement && parseInt(displayedDayElement.innerText) !== currentDay) {
+                    renderCalendar(displayYear, displayMonth);
+                } else if (!displayedDayElement) {
+                    renderCalendar(displayYear, displayMonth);
+                }
+            }
+        }, 60000); // 60000ms = 1분
     </script>
 </body>
 </html>
