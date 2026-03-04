@@ -12,34 +12,39 @@
             --point-color: #A7C7E7; 
             --text-color: #A7C7E7;
             --sub-text-color: rgba(167, 199, 231, 0.8);
-            --box-shadow: 0 10px 25px rgba(167, 199, 231, 0.18);
+            /* 대안: 은은한 하늘색 선 + 네거티브 스프레드 그림자 */
+            --stroke-color: rgba(167, 199, 231, 0.2);
+            --soft-glow: 0 15px 35px -10px rgba(167, 199, 231, 0.4);
         }
 
         body {
             margin: 0;
-            padding: 20px; /* 그림자 잘림 방지용 여백 */
+            padding: 35px; /* 그림자가 퍼질 수 있는 충분한 공간 확보 */
             background-color: transparent;
             color: var(--text-color);
             font-family: 'Nunito', 'Noto Sans KR', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: calc(100vh - 40px);
+            min-height: calc(100vh - 70px);
             overflow: hidden;
             box-sizing: border-box;
         }
 
         .widget-box {
-            width: 95%; /* 캘린더와 동일한 비율 설정 */
-            max-width: 380px; /* 캘린더의 max-width와 동일하게 맞춤 */
+            width: 100%;
+            max-width: 380px; /* 캘린더와 가로비율 통일 */
             padding: 40px 25px; 
             box-sizing: border-box;
             background-color: var(--bg-color);
-            border: 1.5px solid #F4F9FF; 
+            /* 1. 얇고 연한 테두리 추가 */
+            border: 1px solid var(--stroke-color); 
             border-radius: 20px;
             user-select: none;
             transition: all 0.3s ease;
-            box-shadow: var(--box-shadow);
+            /* 2. 네거티브 스프레드 그림자 (안쪽으로 모이면서 부드럽게 퍼짐) */
+            box-shadow: var(--soft-glow);
+            position: relative;
         }
 
         /* 시간 섹션 */
@@ -49,7 +54,7 @@
         }
 
         #clock {
-            font-size: clamp(2.3rem, 11vw, 3.5rem); /* 너비 축소에 따른 폰트 최적화 */
+            font-size: clamp(2.3rem, 11vw, 3.5rem); 
             font-weight: 800; 
             letter-spacing: -1px;
             line-height: 1;
@@ -77,7 +82,7 @@
             width: 100%;
             height: 1.5px;
             border-top: 1.5px dashed var(--point-color);
-            opacity: 0.35;
+            opacity: 0.3;
             margin-bottom: 25px;
         }
 
@@ -86,7 +91,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 15px; /* 간격 살짝 축소 */
+            gap: 15px; 
             margin-bottom: 25px;
         }
 
@@ -175,7 +180,7 @@
                     ☁️ <span id="location-name">서울</span>의 날씨
                 </div>
                 <div id="temp">--°C</div>
-                <div id="condition">연동 중...</div>
+                <div id="condition">데이터 로드 중...</div>
             </div>
         </div>
 
@@ -217,9 +222,10 @@
         }
 
         async function getWeatherData() {
+            const conditionEl = document.getElementById('condition');
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); 
+                const timeoutId = setTimeout(() => controller.abort(), 10000); 
 
                 const currentRes = await fetch(
                     `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=kr`,
@@ -234,7 +240,7 @@
                 if (currentData.cod === 200) {
                     document.getElementById('location-name').innerText = currentData.name;
                     document.getElementById('temp').innerText = `${Math.round(currentData.main.temp)}°C`;
-                    document.getElementById('condition').innerText = currentData.weather[0].description;
+                    conditionEl.innerText = currentData.weather[0].description;
                     
                     const iconText = document.getElementById('weather-icon');
                     const main = currentData.weather[0].main.toLowerCase();
@@ -243,7 +249,6 @@
                     else if (main.includes('rain')) iconText.innerText = "☔";
                     else if (main.includes('clear')) iconText.innerText = "☀️";
                     else if (main.includes('snow')) iconText.innerText = "❄️";
-                    else if (main.includes('mist') || main.includes('haze')) iconText.innerText = "🌫️";
                     else iconText.innerText = "🌤️";
 
                     document.getElementById('today-forecast').innerText = 
@@ -261,7 +266,8 @@
 
             } catch (error) {
                 console.error("Weather load failed:", error);
-                document.getElementById('condition').innerText = "연결 실패 (지역명 확인)";
+                conditionEl.innerText = "날씨 정보 연결 중...";
+                // 연결 실패 시 10초 후 재시도
                 setTimeout(getWeatherData, 10000);
             }
         }
