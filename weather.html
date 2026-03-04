@@ -13,33 +13,36 @@
             --point-color: #A7C7E7; 
             --text-color: #A7C7E7;
             --sub-text-color: rgba(167, 199, 231, 0.8);
-            --box-shadow: 0 10px 30px rgba(167, 199, 231, 0.2);
+            /* 그림자가 잘리지 않도록 범위를 조금 더 좁게 조정 */
+            --box-shadow: 0 8px 20px rgba(167, 199, 231, 0.25);
         }
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px; /* 그림자가 잘리지 않도록 바디에 여백 추가 */
             background-color: transparent;
             color: var(--text-color);
             font-family: 'Nunito', 'Noto Sans KR', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            min-height: calc(100vh - 40px);
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         .widget-box {
-            width: 92%;
+            width: 95%;
             max-width: 360px;
             padding: 40px 30px; 
             box-sizing: border-box;
             background-color: var(--bg-color);
-            border: 2px solid #F0F7FF; /* 아주 연한 테두리로 깔끔하게 */
+            border: 2px solid #F0F7FF; 
             border-radius: 20px;
             user-select: none;
             transition: all 0.3s ease;
             box-shadow: var(--box-shadow);
+            position: relative;
         }
 
         /* 시간 섹션 */
@@ -50,7 +53,7 @@
 
         #clock {
             font-size: clamp(2.5rem, 12vw, 3.5rem);
-            font-weight: 800; /* 세련된 두께 */
+            font-weight: 800; 
             letter-spacing: -1px;
             line-height: 1;
             color: var(--point-color);
@@ -129,7 +132,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            background: #F0F7FF; /* 연한 하늘색 배경 박스 */
+            background: #F0F7FF; 
             padding: 15px;
             border-radius: 15px;
         }
@@ -201,7 +204,7 @@
         const city = urlParams.get('city') || 'Seoul';
         const API_KEY = '8e20252538b7042a983b9c0379201977';
 
-        // 2. 포인트 컬러 커스텀 (필요시 ?color=HEX코드)
+        // 2. 포인트 컬러 커스텀
         const paramColor = urlParams.get('color');
         if (paramColor) {
             document.documentElement.style.setProperty('--point-color', '#' + paramColor);
@@ -228,7 +231,9 @@
 
         async function getWeatherData() {
             try {
+                // 현재 날씨 API 호출
                 const currentRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
+                if (!currentRes.ok) throw new Error('현재 날씨 데이터 호출 실패');
                 const currentData = await currentRes.json();
 
                 if (currentData.cod === 200) {
@@ -244,28 +249,35 @@
                     else if (main.includes('snow')) iconText.innerText = "❄️";
                     else iconText.innerText = "🌤️";
 
+                    // 현재 API 데이터의 최고/최저 표시
                     document.getElementById('today-forecast').innerText = 
                         `${Math.round(currentData.main.temp_max)}° / ${Math.round(currentData.main.temp_min)}°`;
                 }
 
+                // 예보 API 호출
                 const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
+                if (!forecastRes.ok) throw new Error('예보 데이터 호출 실패');
                 const forecastData = await forecastRes.json();
 
                 if (forecastData.cod === "200") {
-                    const tomorrow = forecastData.list[8]; 
+                    // 리스트에서 약 24시간 뒤 데이터 추출 (리스트는 3시간 단위)
+                    const tomorrow = forecastData.list[8] || forecastData.list[forecastData.list.length - 1]; 
                     document.getElementById('tomorrow-forecast').innerText = 
                         `${Math.round(tomorrow.main.temp_max)}° / ${Math.round(tomorrow.main.temp_min)}°`;
                 }
 
             } catch (error) {
-                console.error("Weather load failed");
+                console.error("Weather load failed:", error);
+                document.getElementById('condition').innerText = "지역 설정을 확인해주세요";
             }
         }
 
         updateClock();
         setInterval(updateClock, 1000);
+        
+        // 초기 로드 시 지연 방지를 위해 즉시 실행
         getWeatherData();
-        setInterval(getWeatherData, 1800000);
+        setInterval(getWeatherData, 1800000); // 30분 주기로 업데이트
     </script>
 </body>
 </html>
