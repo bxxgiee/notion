@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Minimal Time & Weather</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        :root {
+            /* 기본 색상 설정 */
+            --bg-color: #A7C7E7; 
+            --text-color: #FFFFFF;
+            --sub-text-color: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            color: var(--text-color);
+            font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .widget-box {
+            width: 92%;
+            max-width: 360px;
+            padding: 40px 30px; 
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            border-radius: 20px;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        /* 시간 섹션 */
+        .time-section {
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        #clock {
+            font-size: clamp(2.5rem, 12vw, 3.5rem);
+            font-weight: 800; /* 기존 900에서 800으로 얇게 조절 */
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        #ampm {
+            font-size: clamp(0.8rem, 4vw, 1rem);
+            font-weight: 700;
+            margin-left: 5px;
+            opacity: 0.8;
+        }
+
+        /* 날짜 섹션 */
+        #date {
+            font-size: clamp(0.9rem, 4vw, 1.05rem);
+            font-weight: 600;
+            color: var(--sub-text-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* 구분선 */
+        .divider {
+            width: 100%;
+            height: 1.5px;
+            border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
+            margin-bottom: 25px;
+        }
+
+        /* 날씨 정보 섹션 */
+        .weather-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .weather-icon {
+            font-size: clamp(2.2rem, 10vw, 2.8rem);
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        .weather-info {
+            text-align: left;
+        }
+
+        /* 위치 표시 (기온 위로 이동) */
+        .weather-title {
+            font-size: clamp(0.7rem, 3vw, 0.8rem);
+            font-weight: 300; 
+            margin-bottom: 5px;
+            opacity: 0.85;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #temp {
+            font-size: clamp(1.8rem, 8vw, 2.2rem);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        #condition {
+            font-size: clamp(0.75rem, 3.5vw, 0.9rem);
+            font-weight: 400;
+            color: var(--sub-text-color);
+            margin-top: 5px;
+        }
+
+        /* 예보 섹션 (오늘/내일 추가) */
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .forecast-item {
+            text-align: center;
+        }
+
+        .forecast-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .forecast-temp {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-box">
+        <!-- 시간 및 날짜 -->
+        <div class="time-section">
+            <div id="clock">00:00<span id="ampm">AM</span></div>
+        </div>
+        <div id="date">2024. 00. 00. WED</div>
+
+        <div class="divider"></div>
+
+        <!-- 날씨 상세 정보 -->
+        <div class="weather-content">
+            <div id="weather-icon" class="weather-icon">☁️</div>
+            <div class="weather-info">
+                <!-- OO의 날씨 타이틀을 기온 위로 이동 -->
+                <div class="weather-title">
+                    ☁️ <span id="location-name">서울</span>의 날씨
+                </div>
+                <div id="temp">--°C</div>
+                <div id="condition">연동 중...</div>
+            </div>
+        </div>
+
+        <!-- 오늘/내일 예보 섹션 -->
+        <div class="forecast-grid">
+            <div class="forecast-item">
+                <div class="forecast-label">오늘</div>
+                <div id="today-forecast" class="forecast-temp">-- / --</div>
+            </div>
+            <div class="forecast-item">
+                <div class="forecast-label">내일</div>
+                <div id="tomorrow-forecast" class="forecast-temp">-- / --</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // 1. 설정값 (기본값: Seoul)
+        const city = urlParams.get('city') || 'Seoul';
+        const API_KEY = '8e20252538b7042a983b9c0379201977';
+
+        // 2. 배경색 커스텀
+        const paramBg = urlParams.get('bg');
+        if (paramBg) {
+            document.documentElement.style.setProperty('--bg-color', '#' + paramBg);
+        }
+
+        // 시계 업데이트
+        function updateClock() {
+            const now = new Date();
+            let h = now.getHours();
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            
+            h = h % 12 || 12;
+            const hStr = String(h).padStart(2, '0');
+
+            document.getElementById('clock').innerHTML = `${hStr}:${m}<span id="ampm">${ampm}</span>`;
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const week = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            document.getElementById('date').innerText = `${year}. ${month}. ${day}. ${week[now.getDay()]}`;
+        }
+
+        // 날씨 데이터 가져오기
+        async function getWeatherData() {
+            try {
+                // 1. 현재 날씨 가져오기
+                const currentRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
+                const currentData = await currentRes.json();
+
+                if (currentData.cod === 200) {
+                    document.getElementById('location-name').innerText = currentData.name;
+                    document.getElementById('temp').innerText = `${Math.round(currentData.main.temp)}°C`;
+                    document.getElementById('condition').innerText = currentData.weather[0].description;
+                    
+                    const iconText = document.getElementById('weather-icon');
+                    const main = currentData.weather[0].main.toLowerCase();
+                    if (main.includes('cloud')) iconText.innerText = "☁️";
+                    else if (main.includes('rain')) iconText.innerText = "☔";
+                    else if (main.includes('clear')) iconText.innerText = "☀️";
+                    else if (main.includes('snow')) iconText.innerText = "❄️";
+                    else iconText.innerText = "🌤️";
+
+                    // 오늘 최고/최저 표시 (현재 데이터 기준)
+                    document.getElementById('today-forecast').innerText = 
+                        `${Math.round(currentData.main.temp_max)}° / ${Math.round(currentData.main.temp_min)}°`;
+                }
+
+                // 2. 예보 데이터 가져오기 (내일 날씨용)
+                const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
+                const forecastData = await forecastRes.json();
+
+                if (forecastData.cod === "200") {
+                    // 내일 날씨 찾기 (약 24시간 뒤인 리스트의 8번째 항목 근처)
+                    const tomorrow = forecastData.list[8]; 
+                    document.getElementById('tomorrow-forecast').innerText = 
+                        `${Math.round(tomorrow.main.temp_max)}° / ${Math.round(tomorrow.main.temp_min)}°`;
+                }
+
+            } catch (error) {
+                console.error("Weather load failed");
+            }
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+        
+        getWeatherData();
+        setInterval(getWeatherData, 1800000); // 30분마다 업데이트
+    </script>
+</body>
+</html>
