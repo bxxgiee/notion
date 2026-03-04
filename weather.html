@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notion Minimal Time & Weather</title>
+    <title>Notion Minimal Time & Weather - White Version</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
         :root {
-            /* 기본 색상 설정 */
-            --bg-color: #A7C7E7; 
-            --text-color: #FFFFFF;
-            --sub-text-color: rgba(255, 255, 255, 0.8);
+            /* 색상 반전: 배경은 흰색, 포인트 컬러는 하늘색 */
+            --bg-color: #FFFFFF; 
+            --point-color: #A7C7E7; 
+            --text-color: #A7C7E7;
+            --sub-text-color: rgba(167, 199, 231, 0.8);
+            --box-shadow: 0 10px 30px rgba(167, 199, 231, 0.2);
         }
 
         body {
@@ -33,9 +35,11 @@
             padding: 40px 30px; 
             box-sizing: border-box;
             background-color: var(--bg-color);
+            border: 2px solid #F0F7FF; /* 아주 연한 테두리로 깔끔하게 */
             border-radius: 20px;
             user-select: none;
             transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
         }
 
         /* 시간 섹션 */
@@ -46,9 +50,10 @@
 
         #clock {
             font-size: clamp(2.5rem, 12vw, 3.5rem);
-            font-weight: 800; /* 기존 900에서 800으로 얇게 조절 */
+            font-weight: 800; /* 세련된 두께 */
             letter-spacing: -1px;
             line-height: 1;
+            color: var(--point-color);
         }
 
         #ampm {
@@ -71,7 +76,8 @@
         .divider {
             width: 100%;
             height: 1.5px;
-            border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
+            border-top: 1.5px dashed var(--point-color);
+            opacity: 0.4;
             margin-bottom: 25px;
         }
 
@@ -93,21 +99,22 @@
             text-align: left;
         }
 
-        /* 위치 표시 (기온 위로 이동) */
         .weather-title {
             font-size: clamp(0.7rem, 3vw, 0.8rem);
-            font-weight: 300; 
+            font-weight: 400; 
             margin-bottom: 5px;
             opacity: 0.85;
             display: flex;
             align-items: center;
             gap: 5px;
+            color: var(--point-color);
         }
 
         #temp {
             font-size: clamp(1.8rem, 8vw, 2.2rem);
             font-weight: 800;
             line-height: 1;
+            color: var(--point-color);
         }
 
         #condition {
@@ -117,12 +124,12 @@
             margin-top: 5px;
         }
 
-        /* 예보 섹션 (오늘/내일 추가) */
+        /* 예보 섹션 (오늘/내일) */
         .forecast-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            background: rgba(255, 255, 255, 0.1);
+            background: #F0F7FF; /* 연한 하늘색 배경 박스 */
             padding: 15px;
             border-radius: 15px;
         }
@@ -135,12 +142,14 @@
             font-size: 0.75rem;
             font-weight: 700;
             margin-bottom: 4px;
+            color: var(--point-color);
             opacity: 0.8;
         }
 
         .forecast-temp {
             font-size: 0.95rem;
             font-weight: 600;
+            color: var(--point-color);
         }
 
         @keyframes floating {
@@ -164,7 +173,6 @@
         <div class="weather-content">
             <div id="weather-icon" class="weather-icon">☁️</div>
             <div class="weather-info">
-                <!-- OO의 날씨 타이틀을 기온 위로 이동 -->
                 <div class="weather-title">
                     ☁️ <span id="location-name">서울</span>의 날씨
                 </div>
@@ -193,13 +201,13 @@
         const city = urlParams.get('city') || 'Seoul';
         const API_KEY = '8e20252538b7042a983b9c0379201977';
 
-        // 2. 배경색 커스텀
-        const paramBg = urlParams.get('bg');
-        if (paramBg) {
-            document.documentElement.style.setProperty('--bg-color', '#' + paramBg);
+        // 2. 포인트 컬러 커스텀 (필요시 ?color=HEX코드)
+        const paramColor = urlParams.get('color');
+        if (paramColor) {
+            document.documentElement.style.setProperty('--point-color', '#' + paramColor);
+            document.documentElement.style.setProperty('--text-color', '#' + paramColor);
         }
 
-        // 시계 업데이트
         function updateClock() {
             const now = new Date();
             let h = now.getHours();
@@ -218,10 +226,8 @@
             document.getElementById('date').innerText = `${year}. ${month}. ${day}. ${week[now.getDay()]}`;
         }
 
-        // 날씨 데이터 가져오기
         async function getWeatherData() {
             try {
-                // 1. 현재 날씨 가져오기
                 const currentRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
                 const currentData = await currentRes.json();
 
@@ -238,17 +244,14 @@
                     else if (main.includes('snow')) iconText.innerText = "❄️";
                     else iconText.innerText = "🌤️";
 
-                    // 오늘 최고/최저 표시 (현재 데이터 기준)
                     document.getElementById('today-forecast').innerText = 
                         `${Math.round(currentData.main.temp_max)}° / ${Math.round(currentData.main.temp_min)}°`;
                 }
 
-                // 2. 예보 데이터 가져오기 (내일 날씨용)
                 const forecastRes = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}&lang=kr`);
                 const forecastData = await forecastRes.json();
 
                 if (forecastData.cod === "200") {
-                    // 내일 날씨 찾기 (약 24시간 뒤인 리스트의 8번째 항목 근처)
                     const tomorrow = forecastData.list[8]; 
                     document.getElementById('tomorrow-forecast').innerText = 
                         `${Math.round(tomorrow.main.temp_max)}° / ${Math.round(tomorrow.main.temp_min)}°`;
@@ -261,9 +264,8 @@
 
         updateClock();
         setInterval(updateClock, 1000);
-        
         getWeatherData();
-        setInterval(getWeatherData, 1800000); // 30분마다 업데이트
+        setInterval(getWeatherData, 1800000);
     </script>
 </body>
 </html>
