@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+
+body{
+margin:0;
+font-family:sans-serif;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+height:100vh;
+background:#111;
+color:white;
+}
+
+#clock{
+font-size:40px;
+margin-bottom:20px;
+}
+
+#settings{
+cursor:pointer;
+padding:6px 12px;
+background:#333;
+border-radius:6px;
+}
+
+#panel{
+position:fixed;
+bottom:20px;
+background:white;
+color:black;
+padding:15px;
+border-radius:10px;
+display:none;
+}
+
+.palette{
+width:30px;
+height:30px;
+display:inline-block;
+margin:5px;
+cursor:pointer;
+border-radius:6px;
+}
+
+#embedlink{
+margin-top:10px;
+width:260px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="clock"></div>
+
+<div id="settings">⚙️ 설정</div>
+
+<div id="panel">
+
+<p>컬러 선택</p>
+
+<div class="palette" style="background:#ffffff" onclick="setColor('#ffffff')"></div>
+<div class="palette" style="background:#ff6b6b" onclick="setColor('#ff6b6b')"></div>
+<div class="palette" style="background:#4ecdc4" onclick="setColor('#4ecdc4')"></div>
+<div class="palette" style="background:#ffe66d" onclick="setColor('#ffe66d')"></div>
+
+<p>노션 Embed 링크</p>
+<input id="embedlink" readonly>
+
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search)
+const color = params.get("color")
+
+if(color){
+document.body.style.color = color
+}
+
+function clock(){
+const now = new Date()
+document.getElementById("clock").innerText =
+now.toLocaleTimeString()
+}
+
+setInterval(clock,1000)
+clock()
+
+const panel = document.getElementById("panel")
+
+document.getElementById("settings").onclick = () =>{
+panel.style.display =
+panel.style.display === "block" ? "none" : "block"
+}
+
+function setColor(c){
+
+document.body.style.color = c
+
+const base = window.location.origin + window.location.pathname
+
+const url = base + "?color=" + encodeURIComponent(c)
+
+document.getElementById("embedlink").value = url
+
+}
+
+</script>
+
+</body>
+</html>
