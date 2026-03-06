@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,52 +6,201 @@
 
 <style>
 
+*{
+box-sizing:border-box;
+}
+
 body{
 margin:0;
-font-family:sans-serif;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
 height:100vh;
-background:#111;
-color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+background:transparent;
+font-family:-apple-system,BlinkMacSystemFont,system-ui;
 }
 
-#clock{
-font-size:40px;
-margin-bottom:20px;
+/* 카드 */
+
+.widget{
+
+width:300px;
+padding:18px;
+border-radius:26px;
+
+background:linear-gradient(145deg,#ffd9e2,#ffeaf0);
+
+box-shadow:
+0 20px 40px rgba(0,0,0,.12),
+inset 0 0 0 3px rgba(255,255,255,.5);
+
+position:relative;
+
+transition:all .3s;
+
 }
 
-#settings{
+/* 상단 */
+
+.topbar{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+font-size:12px;
+font-weight:600;
+letter-spacing:1px;
+
+color:#e394a4;
+
+margin-bottom:12px;
+
+}
+
+/* 화면 */
+
+.screen{
+
+background:linear-gradient(#eef1f4,#f9fafb);
+
+border-radius:16px;
+padding:22px;
+
+box-shadow:
+inset 0 6px 8px rgba(0,0,0,.06),
+inset 0 -6px 8px rgba(255,255,255,.8);
+
+text-align:center;
+
+}
+
+/* 시간 */
+
+.time{
+
+font-family:monospace;
+font-size:56px;
+letter-spacing:3px;
+color:#666;
+
+}
+
+/* AMPM */
+
+.ampm{
+
+font-size:16px;
+color:#ff9eb4;
+margin-left:6px;
+
+}
+
+/* 설정 버튼 */
+
+.settings{
+
+position:absolute;
+top:14px;
+right:16px;
+
 cursor:pointer;
-padding:6px 12px;
-background:#333;
-border-radius:6px;
+font-size:18px;
+
+transition:.2s;
+
 }
 
-#panel{
-position:fixed;
-bottom:20px;
-background:white;
-color:black;
-padding:15px;
-border-radius:10px;
-display:none;
+.settings:hover{
+
+transform:rotate(20deg) scale(1.1);
+
 }
+
+/* 설정 패널 */
+
+.panel{
+
+position:absolute;
+
+top:110%;
+left:50%;
+
+transform:translateX(-50%);
+
+width:230px;
+
+background:white;
+
+border-radius:16px;
+
+padding:14px;
+
+box-shadow:0 18px 40px rgba(0,0,0,.15);
+
+display:none;
+
+animation:pop .2s ease;
+
+}
+
+@keyframes pop{
+
+from{transform:translate(-50%,10px);opacity:0}
+to{transform:translate(-50%,0);opacity:1}
+
+}
+
+/* 제목 */
+
+.panel h4{
+
+margin:0 0 8px;
+font-size:12px;
+color:#999;
+
+}
+
+/* 컬러 팔레트 */
 
 .palette{
+
 width:30px;
 height:30px;
+
+border-radius:8px;
+
 display:inline-block;
-margin:5px;
+margin:4px;
+
 cursor:pointer;
-border-radius:6px;
+
+border:2px solid white;
+
+box-shadow:0 3px 8px rgba(0,0,0,.1);
+
+transition:.2s;
+
 }
 
-#embedlink{
+.palette:hover{
+
+transform:scale(1.15);
+
+}
+
+/* 링크 */
+
+.embed{
+
+width:100%;
 margin-top:10px;
-width:260px;
+font-size:10px;
+
+border:1px solid #eee;
+border-radius:6px;
+padding:4px;
+
 }
 
 </style>
@@ -59,58 +209,105 @@ width:260px;
 
 <body>
 
-<div id="clock"></div>
+<div class="widget" id="widget">
 
-<div id="settings">⚙️ 설정</div>
+<div class="settings" onclick="togglePanel()">⚙</div>
 
-<div id="panel">
+<div class="topbar">
 
-<p>컬러 선택</p>
+<span id="date"></span>
 
-<div class="palette" style="background:#ffffff" onclick="setColor('#ffffff')"></div>
-<div class="palette" style="background:#ff6b6b" onclick="setColor('#ff6b6b')"></div>
-<div class="palette" style="background:#4ecdc4" onclick="setColor('#4ecdc4')"></div>
-<div class="palette" style="background:#ffe66d" onclick="setColor('#ffe66d')"></div>
+<span>•••</span>
 
-<p>노션 Embed 링크</p>
-<input id="embedlink" readonly>
+</div>
+
+<div class="screen">
+
+<span class="time" id="time"></span>
+
+<span class="ampm" id="ampm"></span>
+
+</div>
+
+<div class="panel" id="panel">
+
+<h4>Theme</h4>
+
+<div class="palette" style="background:#ffd9e2" onclick="setTheme('#ffd9e2')"></div>
+<div class="palette" style="background:#ffe9c7" onclick="setTheme('#ffe9c7')"></div>
+<div class="palette" style="background:#dff6ff" onclick="setTheme('#dff6ff')"></div>
+<div class="palette" style="background:#e6ffe9" onclick="setTheme('#e6ffe9')"></div>
+<div class="palette" style="background:#ece7ff" onclick="setTheme('#ece7ff')"></div>
+
+<input class="embed" id="embedlink" readonly>
+
+</div>
 
 </div>
 
 <script>
 
-const params = new URLSearchParams(window.location.search)
-const color = params.get("color")
+/* URL 설정 불러오기 */
 
-if(color){
-document.body.style.color = color
+const params=new URLSearchParams(window.location.search)
+const theme=params.get("theme")
+
+if(theme){
+
+document.getElementById("widget").style.background=theme
+
 }
 
-function clock(){
-const now = new Date()
-document.getElementById("clock").innerText =
-now.toLocaleTimeString()
+/* 시계 */
+
+function updateClock(){
+
+const now=new Date()
+
+let h=now.getHours()
+let m=now.getMinutes()
+
+let ampm=h>=12?"PM":"AM"
+
+h=h%12
+h=h?h:12
+
+m=m<10?"0"+m:m
+
+document.getElementById("time").innerText=h+":"+m
+document.getElementById("ampm").innerText=ampm
+
+const options={month:"short",day:"numeric",weekday:"short"}
+
+document.getElementById("date").innerText=
+now.toLocaleDateString("en-US",options).toUpperCase()
+
 }
 
-setInterval(clock,1000)
-clock()
+setInterval(updateClock,1000)
+updateClock()
 
-const panel = document.getElementById("panel")
+/* 설정 패널 */
 
-document.getElementById("settings").onclick = () =>{
-panel.style.display =
-panel.style.display === "block" ? "none" : "block"
+function togglePanel(){
+
+const p=document.getElementById("panel")
+
+p.style.display=p.style.display==="block"?"none":"block"
+
 }
 
-function setColor(c){
+/* 테마 변경 */
 
-document.body.style.color = c
+function setTheme(c){
 
-const base = window.location.origin + window.location.pathname
+document.getElementById("widget").style.background=c
 
-const url = base + "?color=" + encodeURIComponent(c)
+const base=window.location.origin+window.location.pathname
 
-document.getElementById("embedlink").value = url
+const url=base+"?theme="+encodeURIComponent(c)
+
+document.getElementById("embedlink").value=url
 
 }
 
@@ -118,3 +315,4 @@ document.getElementById("embedlink").value = url
 
 </body>
 </html>
+```
