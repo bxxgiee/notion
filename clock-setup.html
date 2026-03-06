@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+
+body{
+
+font-family:system-ui;
+background:#fafafa;
+padding:40px;
+
+}
+
+.container{
+
+max-width:700px;
+margin:auto;
+
+}
+
+h1{
+
+font-size:22px;
+margin-bottom:20px;
+
+}
+
+.palette{
+
+width:40px;
+height:40px;
+
+border-radius:10px;
+
+display:inline-block;
+margin:8px;
+
+cursor:pointer;
+
+box-shadow:0 3px 8px rgba(0,0,0,.15);
+
+}
+
+.preview{
+
+margin-top:30px;
+
+border:1px solid #eee;
+padding:20px;
+
+border-radius:14px;
+
+}
+
+iframe{
+
+border:none;
+width:300px;
+height:200px;
+
+}
+
+input{
+
+width:100%;
+padding:8px;
+margin-top:10px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Clock Widget Setup</h1>
+
+<p>테마 선택</p>
+
+<div class="palette" style="background:#ffd9e2" onclick="setTheme('#ffd9e2')"></div>
+<div class="palette" style="background:#ffe9c7" onclick="setTheme('#ffe9c7')"></div>
+<div class="palette" style="background:#dff6ff" onclick="setTheme('#dff6ff')"></div>
+<div class="palette" style="background:#e6ffe9" onclick="setTheme('#e6ffe9')"></div>
+<div class="palette" style="background:#ece7ff" onclick="setTheme('#ece7ff')"></div>
+
+<div class="preview">
+
+<h3>미리보기</h3>
+
+<iframe id="preview"></iframe>
+
+<p>노션 Embed 링크</p>
+
+<input id="embed">
+
+</div>
+
+</div>
+
+<script>
+
+const base=window.location.origin+"/widget.html"
+
+function setTheme(c){
+
+const url=base+"?theme="+encodeURIComponent(c)
+
+document.getElementById("preview").src=url
+
+document.getElementById("embed").value=url
+
+}
+
+</script>
+
+</body>
+</html>
