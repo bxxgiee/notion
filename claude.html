@@ -3,33 +3,41 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fur Widget</title>
+  <title>🎀 Fur Widget</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet"/>
+  <!-- 손글씨 폰트: Gaegu (한국어 귀여운 손글씨) + Caveat (영문 손글씨) -->
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Caveat:wght@600;700;800&display=swap" rel="stylesheet"/>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { width: 100%; height: 100%; }
-    input[type=range]::-webkit-slider-thumb { opacity: 0; }
-    input[type=range]::-moz-range-thumb { opacity: 0; }
-    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:.2} }
-    @keyframes fl { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    input[type=range] { -webkit-appearance: none; appearance: none; }
+    input[type=range]::-webkit-slider-thumb { opacity: 0; width: 0; height: 0; }
+    @keyframes blink  { 0%,49%{opacity:1} 50%,100%{opacity:.15} }
+    @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes spin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes wiggle { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+    @keyframes pop    { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
   </style>
 </head>
 <body>
 <div id="root"></div>
+
+<!-- SVG 필터 (배경/버튼 모양에만 사용) -->
 <svg width="0" height="0" style="position:absolute;overflow:hidden">
   <defs>
-    <filter id="fz" x="-15%" y="-15%" width="130%" height="130%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="4" seed="9" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feGaussianBlur in="d" stdDeviation="0.7"/>
+    <filter id="fz-card" x="-12%" y="-12%" width="124%" height="124%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.075" numOctaves="4" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="8" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
-    <filter id="fz2" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.075" numOctaves="5" seed="5" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G" result="d"/>
-      <feGaussianBlur in="d" stdDeviation="1.1"/>
+    <filter id="fz-btn" x="-22%" y="-22%" width="144%" height="144%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.085" numOctaves="5" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="fz-track" x="-8%" y="-30%" width="116%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="3" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
   </defs>
 </svg>
@@ -37,129 +45,295 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
+/* ─── 배경 털 ─── */
 const paintFur = (canvas) => {
   const ctx = canvas.getContext("2d"), W = canvas.width, H = canvas.height;
-  ctx.fillStyle = "#f5b8c4";
+  ctx.fillStyle = "#f4b6c2";
   ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < 5500; i++) {
-    const x = Math.random()*W, y = Math.random()*H, len = 9 + Math.random()*18;
-    const a = -Math.PI/2 + (Math.random()-.5)*1.6, cv = (Math.random()-.5)*.7;
+  for (let i = 0; i < 7000; i++) {
+    const x = Math.random()*W, y = Math.random()*H;
+    const len = 8 + Math.random()*22;
+    const a = -Math.PI/2 + (Math.random()-.5)*1.7;
+    const cv = (Math.random()-.5)*.8;
     const cx = x+Math.cos(a+cv)*len*.5, cy = y+Math.sin(a+cv)*len*.5;
     const ex = x+Math.cos(a)*len, ey = y+Math.sin(a)*len;
     const g = ctx.createLinearGradient(x,y,ex,ey);
-    g.addColorStop(0, "#a03868cc");
-    g.addColorStop(.45, "#f5b8c4aa");
-    g.addColorStop(1, "#fff0f300");
-    ctx.beginPath(); ctx.moveTo(x,y); ctx.quadraticCurveTo(cx,cy,ex,ey);
+    g.addColorStop(0,   "#92285acc");
+    g.addColorStop(.4,  "#f4b6c299");
+    g.addColorStop(1,   "#fff0f400");
+    ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.quadraticCurveTo(cx,cy,ex,ey);
     ctx.strokeStyle = g;
-    ctx.lineWidth = .5 + Math.random()*1.1;
-    ctx.lineCap = "round";
-    ctx.globalAlpha = .55 + Math.random()*.45;
+    ctx.lineWidth   = .4 + Math.random()*1.2;
+    ctx.lineCap     = "round";
+    ctx.globalAlpha = .45 + Math.random()*.55;
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
 };
 
-function FurBtn({ icon, label, on, onClick }) {
-  const [pr, setPr] = useState(false);
+/* ─── 귀여운 SVG 아이콘들 ─── */
+const icons = {
+  plane: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M3 11l7-7 2 5-3 2 4 4 2-3 5 2-7 7-2-5 3-2-4-4-2 3z" fill={c} stroke={c} strokeWidth=".5" strokeLinejoin="round"/>
+    </svg>
+  ),
+  wifi: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M5 12.5c1.9-2 4.6-3.2 7-3.2s5.1 1.2 7 3.2" stroke={c} strokeWidth="2.2" strokeLinecap="round"/>
+      <path d="M8.5 16c.9-1 2.1-1.6 3.5-1.6s2.6.6 3.5 1.6" stroke={c} strokeWidth="2.2" strokeLinecap="round"/>
+      <circle cx="12" cy="19.5" r="1.5" fill={c}/>
+      <path d="M1.5 9C4.3 5.9 8 4 12 4s7.7 1.9 10.5 5" stroke={c} strokeWidth="2.2" strokeLinecap="round"/>
+    </svg>
+  ),
+  bluetooth: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M6.5 7.5L17.5 16.5L12 21V3L17.5 7.5L6.5 16.5" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  moon: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" fill={c} stroke={c} strokeWidth=".5"/>
+      <circle cx="16" cy="6" r="1.2" fill="white" opacity=".8"/>
+      <circle cx="18" cy="9" r=".7" fill="white" opacity=".6"/>
+    </svg>
+  ),
+  torch: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <rect x="9" y="13" width="6" height="8" rx="2" fill={c}/>
+      <path d="M8 13l2-8h4l2 8H8z" fill={c} opacity=".8"/>
+      <path d="M12 2v2M7 4l1.5 1.5M17 4l-1.5 1.5" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  timer: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <circle cx="12" cy="13" r="8" stroke={c} strokeWidth="2"/>
+      <path d="M12 9v5l3 2" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+      <path d="M9 2h6M12 2v3" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  camera: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <rect x="2" y="7" width="20" height="14" rx="3" fill={c} opacity=".25" stroke={c} strokeWidth="1.8"/>
+      <circle cx="12" cy="14" r="4" stroke={c} strokeWidth="1.8"/>
+      <circle cx="12" cy="14" r="2" fill={c} opacity=".5"/>
+      <path d="M8 7l1.5-3h5L16 7" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="18" cy="10" r="1" fill={c}/>
+    </svg>
+  ),
+  gear: (c) => (
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
+      <circle cx="12" cy="12" r="3.5" stroke={c} strokeWidth="2"/>
+      <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M19.07 4.93l-1.77 1.77M6.7 17.3l-1.77 1.77" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  bow: () => (
+    <svg viewBox="0 0 60 35" width="60" height="35">
+      <ellipse cx="15" cy="17" rx="14" ry="10" fill="#f48baa" stroke="#e06080" strokeWidth="1.5"/>
+      <ellipse cx="45" cy="17" rx="14" ry="10" fill="#f48baa" stroke="#e06080" strokeWidth="1.5"/>
+      <ellipse cx="15" cy="17" rx="7" ry="5" fill="#f9b8cc" opacity=".6"/>
+      <ellipse cx="45" cy="17" rx="7" ry="5" fill="#f9b8cc" opacity=".6"/>
+      <ellipse cx="30" cy="17" rx="6" ry="6" fill="#f48baa" stroke="#e06080" strokeWidth="1.5"/>
+      <ellipse cx="30" cy="17" rx="3" ry="3" fill="#f9c8d8"/>
+    </svg>
+  ),
+  star: (fill="#f48baa") => (
+    <svg viewBox="0 0 20 20" width="16" height="16">
+      <path d="M10 1l2.4 6.4H19l-5.4 3.8 2 6.4L10 13.7l-5.6 3.9 2-6.4L1 7.4h6.6z" fill={fill}/>
+    </svg>
+  ),
+  heart: (c="#f48baa") => (
+    <svg viewBox="0 0 20 18" width="14" height="14">
+      <path d="M10 16S1 10 1 5a4 4 0 018-1.5A4 4 0 0119 5c0 5-9 11-9 11z" fill={c}/>
+    </svg>
+  ),
+  kitty: () => (
+    <svg viewBox="0 0 40 40" width="38" height="38">
+      {/* ears */}
+      <polygon points="6,16 12,2 18,16" fill="#f9d0dc" stroke="#f48baa" strokeWidth="1.2"/>
+      <polygon points="22,16 28,2 34,16" fill="#f9d0dc" stroke="#f48baa" strokeWidth="1.2"/>
+      <polygon points="8,15 12,5 17,15" fill="#ffb8c8" opacity=".7"/>
+      <polygon points="23,15 28,5 32,15" fill="#ffb8c8" opacity=".7"/>
+      {/* head */}
+      <circle cx="20" cy="23" r="15" fill="#fff8f9" stroke="#f8c0d0" strokeWidth="1.5"/>
+      {/* eyes */}
+      <ellipse cx="14" cy="21" rx="2.5" ry="2.5" fill="#5a3040"/>
+      <ellipse cx="26" cy="21" rx="2.5" ry="2.5" fill="#5a3040"/>
+      <circle cx="15" cy="20" r="1" fill="white"/>
+      <circle cx="27" cy="20" r="1" fill="white"/>
+      {/* nose */}
+      <ellipse cx="20" cy="26" rx="1.5" ry="1" fill="#f48baa"/>
+      {/* mouth */}
+      <path d="M17 28 Q20 31 23 28" stroke="#d06080" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+      {/* whiskers */}
+      <line x1="4" y1="24" x2="14" y2="25" stroke="#d0a0b0" strokeWidth=".8"/>
+      <line x1="4" y1="27" x2="14" y2="27" stroke="#d0a0b0" strokeWidth=".8"/>
+      <line x1="26" y1="25" x2="36" y2="24" stroke="#d0a0b0" strokeWidth=".8"/>
+      <line x1="26" y1="27" x2="36" y2="27" stroke="#d0a0b0" strokeWidth=".8"/>
+    </svg>
+  ),
+};
+
+/* ─── Card: 배경레이어(필터) + 텍스트레이어(필터없음) 분리 ─── */
+function Card({ children, style }) {
   return (
-    <button
-      title={label}
-      onMouseDown={() => setPr(true)}
-      onMouseUp={() => setPr(false)}
-      onMouseLeave={() => setPr(false)}
-      onClick={onClick}
-      style={{
-        width:58, height:58, borderRadius:"50%", border:"none", cursor:"pointer", fontSize:22,
-        background: on
-          ? "radial-gradient(circle at 38% 32%,#f9d0d8,#f0a0b8 55%,#e07090)"
-          : "radial-gradient(circle at 38% 32%,#fff5f7,#fce4ea 40%,#f5b8c4)",
-        boxShadow: pr
-          ? "0 2px 4px #e899b060,inset 0 3px 8px #c0607080"
-          : "0 6px 18px #e899b055,0 2px 4px #d0708060,inset 0 -4px 10px #e07090,inset 0 5px 14px #fff8facc",
-        filter:"url(#fz2)",
-        transform: pr ? "scale(0.92) translateY(2px)" : "scale(1)",
-        transition: "all 0.15s cubic-bezier(.34,1.56,.64,1)",
-        display:"flex", alignItems:"center", justifyContent:"center"
-      }}
-    >{icon}</button>
+    <div style={{ position:"relative", borderRadius:30, ...style }}>
+      <div style={{
+        position:"absolute", inset:0, borderRadius:30,
+        background:"radial-gradient(ellipse at 32% 26%, #fff4f7 0%, #fce2ea 40%, #f4b6c2 100%)",
+        boxShadow:"0 10px 32px #e088a844, 0 3px 10px #d0608040, inset 0 -7px 18px #e06888, inset 0 8px 22px #fff6f9ee, inset 0 2px 5px #fff",
+        filter:"url(#fz-card)",
+      }}/>
+      <div style={{
+        position:"absolute", inset:0, borderRadius:30,
+        background:"radial-gradient(ellipse at 28% 18%, #ffffffaa 0%, transparent 52%)",
+        pointerEvents:"none",
+      }}/>
+      <div style={{ position:"relative", zIndex:2, padding:"16px 20px" }}>
+        {children}
+      </div>
+    </div>
   );
 }
 
+/* ─── 버튼: 배경(필터) + 아이콘(필터없음) ─── */
+function FurBtn({ iconKey, label, on, onClick }) {
+  const [pr, setPr] = useState(false);
+  const ic  = on ? "#fff" : "#c05878";
+  const ic2 = on ? "#fff" : "#d06888";
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:5 }}>
+      <div style={{ position:"relative", width:56, height:56 }}
+        onMouseDown={()=>setPr(true)} onMouseUp={()=>setPr(false)} onMouseLeave={()=>setPr(false)}
+        onClick={onClick}>
+        {/* 배경: fuzzy 필터 */}
+        <div style={{
+          position:"absolute", inset:0, borderRadius:"50%",
+          background: on
+            ? "radial-gradient(circle at 38% 32%, #f9c8d8, #f090b0 55%, #d06080)"
+            : "radial-gradient(circle at 38% 32%, #fff4f7, #fce2ea 40%, #f4b6c2)",
+          boxShadow: pr
+            ? "0 2px 4px #d888a860, inset 0 3px 8px #b05070aa"
+            : "0 6px 18px #e088a855, 0 2px 4px #d0607060, inset 0 -4px 12px #d06888, inset 0 5px 14px #fff8facc",
+          filter:"url(#fz-btn)",
+          transform: pr ? "scale(0.91) translateY(2px)" : "scale(1)",
+          transition:"all 0.15s cubic-bezier(.34,1.56,.64,1)",
+          cursor:"pointer",
+        }}/>
+        {/* 아이콘: 필터 없음 */}
+        <div style={{
+          position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
+          pointerEvents:"none",
+          filter:`drop-shadow(0 1px 2px ${on?"#b0507088":"#e0809088"})`,
+        }}>
+          {icons[iconKey] ? icons[iconKey](on ? "#fff" : "#c05878") : null}
+        </div>
+      </div>
+      <span style={{
+        fontFamily:"Gaegu, sans-serif", fontSize:11, color:"#c06880",
+        fontWeight:700, letterSpacing:.3, textAlign:"center",
+      }}>{label}</span>
+    </div>
+  );
+}
+
+/* ─── 슬라이더 ─── */
 function FurSlider({ val, set, ico, lbl }) {
   return (
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-        <span style={{fontFamily:"Nunito,sans-serif",fontSize:12,color:"#c06078",fontWeight:700}}>{ico} {lbl}</span>
-        <span style={{fontFamily:"Nunito,sans-serif",fontSize:12,color:"#e07090",fontWeight:800}}>{val}%</span>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:8}}>
+        <span style={{fontFamily:"Gaegu,sans-serif",fontSize:16,color:"#b85070",fontWeight:700}}>{ico} {lbl}</span>
+        <span style={{fontFamily:"Caveat,cursive",fontSize:17,color:"#d06080",fontWeight:700}}>{val}%</span>
       </div>
-      <div style={{
-        position:"relative", height:16, borderRadius:10,
-        background:"radial-gradient(ellipse at 30% 40%,#fce4ea,#f5b8c4)",
-        boxShadow:"0 3px 8px #e899b040,inset 0 3px 6px #d0708040",
-        filter:"url(#fz)"
-      }}>
+      <div style={{position:"relative",height:20,borderRadius:14}}>
+        {/* 트랙 배경 */}
         <div style={{
-          position:"absolute", left:0, top:0, height:"100%",
-          width:`${val}%`, borderRadius:10,
-          background:"radial-gradient(ellipse at 30% 40%,#f9aac0,#e0607a)"
+          position:"absolute",inset:0,borderRadius:14,
+          background:"radial-gradient(ellipse at 30% 40%,#fce2ea,#f4b6c2)",
+          boxShadow:"0 2px 6px #e088a840,inset 0 3px 7px #d0608050",
+          filter:"url(#fz-track)",
+        }}/>
+        {/* 채워진 부분 */}
+        <div style={{
+          position:"absolute",left:0,top:0,height:"100%",
+          width:`${val}%`,minWidth:14,borderRadius:14,
+          background:"radial-gradient(ellipse at 30% 40%,#f9a8c0,#d96080)",
+          filter:"url(#fz-track)",
+          transition:"width .08s",
+        }}/>
+        {/* 핸들 */}
+        <div style={{
+          position:"absolute", top:"50%",
+          left:`calc(${val}% - 12px)`,
+          transform:"translateY(-50%)",
+          width:24, height:24, borderRadius:"50%",
+          background:"radial-gradient(circle at 35% 35%,#fff,#fce2ea 60%,#f4b6c2)",
+          boxShadow:"0 3px 8px #d08898aa,inset 0 2px 4px #fff",
+          pointerEvents:"none", zIndex:3,
+          transition:"left .08s",
         }}/>
         <input type="range" min={0} max={100} value={val}
-          onChange={e => set(+e.target.value)}
-          style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0,cursor:"pointer",margin:0}}
+          onChange={e=>set(+e.target.value)}
+          style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:0,cursor:"pointer",margin:0,zIndex:4}}
         />
       </div>
     </div>
   );
 }
 
+/* ─── 토글 ─── */
 function FurToggle({ on, set, label }) {
   return (
-    <div onClick={() => set(!on)} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-      <div style={{
-        width:54, height:30, borderRadius:15, position:"relative", transition:"all .3s",
-        background: on
-          ? "radial-gradient(ellipse at 30% 40%,#f9aac0,#e0607a)"
-          : "radial-gradient(ellipse at 30% 40%,#fce4ea,#f5b8c4)",
-        boxShadow:"0 4px 10px #e899b060,inset 0 -3px 8px #d0708050,inset 0 3px 8px #fff0f3cc",
-        filter:"url(#fz)"
-      }}>
+    <div onClick={()=>set(!on)} style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+      <div style={{position:"relative",width:54,height:28,flexShrink:0}}>
         <div style={{
-          position:"absolute", top:3, left: on ? 27 : 3,
+          position:"absolute",inset:0,borderRadius:14,
+          background: on
+            ? "radial-gradient(ellipse at 30% 40%,#f9a8c0,#d06080)"
+            : "radial-gradient(ellipse at 30% 40%,#fce2ea,#f4b6c2)",
+          boxShadow:"0 4px 10px #e088a855,inset 0 -3px 8px #d0608050,inset 0 3px 8px #fff0f3cc",
+          filter:"url(#fz-track)",
+          transition:"background .3s",
+        }}/>
+        <div style={{
+          position:"absolute", top:2, left: on ? 26 : 2,
           width:24, height:24, borderRadius:"50%",
           transition:"left .3s cubic-bezier(.34,1.56,.64,1)",
-          background:"radial-gradient(circle at 35% 35%,#fff,#fce4ea 60%,#f5b8c4)",
-          boxShadow:"0 3px 8px #e899b080,inset 0 2px 4px #fff"
-        }}/>
+          background:"radial-gradient(circle at 35% 35%,#fff,#fce2ea 60%,#f4b6c2)",
+          boxShadow:"0 3px 8px #d08898aa,inset 0 2px 4px #fff",
+          zIndex:2,
+        }}>
+          {on && <div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {icons.heart("#f48baa")}
+          </div>}
+        </div>
       </div>
-      <span style={{fontFamily:"Nunito,sans-serif",fontSize:13,color:"#c06078",fontWeight:700}}>{label}</span>
+      <span style={{fontFamily:"Gaegu,sans-serif",fontSize:16,color:"#b85070",fontWeight:700}}>{label}</span>
     </div>
   );
 }
 
-const CARD = {
-  borderRadius:28,
-  background:"radial-gradient(ellipse at 30% 28%,#fff6f8,#fce4ea 38%,#f5b8c4)",
-  boxShadow:"0 10px 30px #e899b044,0 4px 12px #d0708044,inset 0 -6px 16px #e07090,inset 0 7px 20px #fff8faee,inset 0 2px 5px #fff",
-  filter:"url(#fz)", padding:"18px 20px", position:"relative"
-};
-const SHIM = {
-  position:"absolute", inset:0, borderRadius:28,
-  background:"radial-gradient(ellipse at 25% 20%,#ffffffcc,transparent 55%)",
-  pointerEvents:"none", zIndex:10
-};
-const INNER = { position:"relative", zIndex:5 };
-const LBL = {
-  fontFamily:"Nunito,sans-serif", fontSize:11, color:"#e07090",
-  fontWeight:800, marginBottom:14, letterSpacing:1.5, textTransform:"uppercase"
-};
+/* ─── 섹션 라벨 ─── */
+const Label = ({children}) => (
+  <div style={{
+    fontFamily:"Caveat,cursive", fontSize:17, color:"#d06888",
+    fontWeight:700, marginBottom:14, display:"flex", alignItems:"center", gap:6,
+  }}>
+    {icons.star()} {children}
+  </div>
+);
 
+/* ─── 메인 앱 ─── */
 function App() {
   const bgRef = useRef();
   const [tick, setTick] = useState(new Date());
-  const [br, setBr] = useState(72), [vol, setVol] = useState(55);
-  const [wifi, setWifi] = useState(true), [bt, setBt] = useState(true);
-  const [dnd, setDnd] = useState(false), [dark, setDark] = useState(false);
+  const [br, setBr]     = useState(72);
+  const [vol, setVol]   = useState(55);
+  const [wifi, setWifi] = useState(true);
+  const [bt, setBt]     = useState(true);
+  const [dnd, setDnd]   = useState(false);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
     const i = setInterval(() => setTick(new Date()), 1000);
@@ -167,11 +341,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const c = bgRef.current;
-    if (!c) return;
+    const c = bgRef.current; if (!c) return;
     const render = () => {
       const r = devicePixelRatio || 1;
-      c.width = c.offsetWidth * r;
+      c.width  = c.offsetWidth  * r;
       c.height = c.offsetHeight * r;
       paintFur(c);
     };
@@ -189,54 +362,78 @@ function App() {
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
       <canvas ref={bgRef} style={{position:"fixed",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
 
-      <div style={{position:"relative",zIndex:1,width:340,display:"flex",flexDirection:"column",gap:16,padding:20}}>
+      <div style={{position:"relative",zIndex:1,width:340,display:"flex",flexDirection:"column",gap:14,padding:20}}>
 
-        {/* 시계 */}
-        <div style={{...CARD, animation:"fl 4s ease-in-out infinite"}}>
-          <div style={SHIM}/>
-          <div style={{...INNER, textAlign:"center"}}>
-            <div style={{fontSize:60,fontWeight:900,color:"#c06078",lineHeight:1,letterSpacing:-3,textShadow:"0 3px 10px #e07090aa,0 1px 0 #fff5f7",fontFamily:"Nunito,sans-serif"}}>
-              {hh}<span style={{animation:"blink 1s infinite",display:"inline-block"}}>:</span>{mm}
+        {/* ── 시계 카드 ── */}
+        <Card style={{animation:"float 4s ease-in-out infinite"}}>
+          {/* 장식 리본 */}
+          <div style={{position:"absolute",top:-18,left:"50%",transform:"translateX(-50%)",zIndex:10,filter:"drop-shadow(0 2px 4px #d06080aa)"}}>
+            {icons.bow()}
+          </div>
+          <div style={{textAlign:"center",paddingTop:10}}>
+            {/* 고양이 */}
+            <div style={{display:"flex",justifyContent:"center",marginBottom:6}}>
+              {icons.kitty()}
             </div>
-            <div style={{fontSize:13,color:"#e07090",fontWeight:800,marginTop:4,fontFamily:"Nunito,sans-serif"}}>{ds}</div>
-            <div style={{fontSize:11,color:"#d08090",fontWeight:700,marginTop:2,fontFamily:"Nunito,sans-serif",opacity:.6}}>{ss}초</div>
+            <div style={{
+              fontFamily:"Caveat,cursive", fontSize:66, fontWeight:800,
+              color:"#c0587a", lineHeight:1, letterSpacing:-1,
+              textShadow:"0 2px 10px #e07090aa",
+            }}>
+              {hh}<span style={{animation:"blink 1s infinite",display:"inline-block",margin:"0 2px"}}>:</span>{mm}
+            </div>
+            <div style={{fontFamily:"Gaegu,sans-serif",fontSize:17,color:"#d06888",fontWeight:700,marginTop:4}}>
+              {ds}
+            </div>
+            <div style={{fontFamily:"Caveat,cursive",fontSize:15,color:"#d098a8",marginTop:1}}>
+              {ss}초 &nbsp;{icons.heart()}
+            </div>
           </div>
-        </div>
+        </Card>
 
-        {/* 퀵 컨트롤 */}
-        <div style={CARD}><div style={SHIM}/><div style={INNER}>
-          <div style={LBL}>✦ Quick Controls</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,justifyItems:"center"}}>
-            <FurBtn icon="✈️" label="에어플레인"/>
-            <FurBtn icon="📶" label="WiFi" on={wifi} onClick={() => setWifi(v=>!v)}/>
-            <FurBtn icon="🔵" label="Bluetooth" on={bt} onClick={() => setBt(v=>!v)}/>
-            <FurBtn icon="🌙" label="방해금지" on={dnd} onClick={() => setDnd(v=>!v)}/>
-            <FurBtn icon="🔦" label="손전등"/>
-            <FurBtn icon="⏱️" label="타이머"/>
-            <FurBtn icon="📷" label="카메라"/>
-            <FurBtn icon="⚙️" label="설정"/>
+        {/* ── 퀵 컨트롤 ── */}
+        <Card>
+          <Label>빠른 설정</Label>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,justifyItems:"center"}}>
+            <FurBtn iconKey="plane"     label="비행기"/>
+            <FurBtn iconKey="wifi"      label="와이파이" on={wifi} onClick={()=>setWifi(v=>!v)}/>
+            <FurBtn iconKey="bluetooth" label="블루투스" on={bt}   onClick={()=>setBt(v=>!v)}/>
+            <FurBtn iconKey="moon"      label="방해금지" on={dnd}  onClick={()=>setDnd(v=>!v)}/>
+            <FurBtn iconKey="torch"     label="손전등"/>
+            <FurBtn iconKey="timer"     label="타이머"/>
+            <FurBtn iconKey="camera"    label="카메라"/>
+            <FurBtn iconKey="gear"      label="설정"/>
           </div>
-        </div></div>
+        </Card>
 
-        {/* 슬라이더 */}
-        <div style={CARD}><div style={SHIM}/><div style={INNER}>
-          <div style={LBL}>✦ 조절</div>
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            <FurSlider val={br} set={setBr} ico="☀️" lbl="밝기"/>
-            <FurSlider val={vol} set={setVol} ico="🔊" lbl="볼륨"/>
+        {/* ── 슬라이더 ── */}
+        <Card>
+          <Label>조절하기</Label>
+          <div style={{display:"flex",flexDirection:"column",gap:18}}>
+            <FurSlider val={br}  set={setBr}  ico="☀️" lbl="밝기"/>
+            <FurSlider val={vol} set={setVol} ico="🎵" lbl="볼륨"/>
           </div>
-        </div></div>
+        </Card>
 
-        {/* 토글 */}
-        <div style={CARD}><div style={SHIM}/><div style={INNER}>
-          <div style={LBL}>✦ 설정</div>
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {/* ── 토글 ── */}
+        <Card>
+          <Label>설정 모음</Label>
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
             <FurToggle on={wifi} set={setWifi} label="Wi-Fi"/>
-            <FurToggle on={bt} set={setBt} label="Bluetooth"/>
-            <FurToggle on={dnd} set={setDnd} label="방해 금지 모드"/>
+            <FurToggle on={bt}   set={setBt}   label="Bluetooth"/>
+            <FurToggle on={dnd}  set={setDnd}  label="방해 금지 모드"/>
             <FurToggle on={dark} set={setDark} label="다크 모드"/>
           </div>
-        </div></div>
+        </Card>
+
+        {/* 하단 장식 별 */}
+        <div style={{display:"flex",justifyContent:"center",gap:10,opacity:.7}}>
+          {[0,1,2,3,4].map(i=>(
+            <div key={i} style={{animation:`wiggle ${1.2+i*.3}s ease-in-out infinite`,animationDelay:`${i*.2}s`}}>
+              {icons.star(i%2===0?"#f48baa":"#ffc8d8")}
+            </div>
+          ))}
+        </div>
 
       </div>
     </div>
