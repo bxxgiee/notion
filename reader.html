@@ -1077,13 +1077,28 @@ async function copyToClipboard(type) {
 
   if (!text) { showToast('❌ 복사할 텍스트가 없습니다'); return; }
 
+  // 줄넘김을 <br>로 변환한 HTML 버전 생성
+  // 노션은 HTML 형식의 클립보드를 우선 인식하므로 줄넘김이 정확히 유지됨
+  const htmlText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+  const html = `<div style="white-space:pre-wrap;">${htmlText}</div>`;
+
   try {
-    await navigator.clipboard.writeText(text);
-    showToast('✅ 클립보드에 복사됨! 노션에 붙여넣기 하세요');
+    // ClipboardItem으로 plain text + HTML 동시에 복사
+    const clipItem = new ClipboardItem({
+      'text/plain': new Blob([text], { type: 'text/plain' }),
+      'text/html':  new Blob([html], { type: 'text/html' })
+    });
+    await navigator.clipboard.write([clipItem]);
+    showToast('✅ 줄넘김 포함 복사 완료! 노션에 붙여넣기 하세요');
   } catch {
+    // 폴백: execCommand 방식 (줄넘김 plain text만)
     textarea.select();
     document.execCommand('copy');
-    showToast('✅ 복사 완료! Ctrl+V로 노션에 붙여넣기');
+    showToast('✅ 복사 완료! (줄넘김은 Shift+Enter로 붙여넣기)');
   }
 }
 
