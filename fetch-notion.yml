@@ -2,8 +2,8 @@ name: Notion 데이터 동기화
 
 on:
   schedule:
-    - cron: '0 * * * *'   # 매 1시간마다 자동 실행
-  workflow_dispatch:        # 수동 실행 버튼도 생김
+    - cron: '0 * * * *'   # 매 1시간마다
+  workflow_dispatch:        # 수동 실행 버튼
 
 jobs:
   sync:
@@ -12,7 +12,7 @@ jobs:
       - name: 레포 체크아웃
         uses: actions/checkout@v4
 
-      - name: 노션 데이터 가져오기
+      - name: 노션 데이터 + 이미지 다운로드
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
@@ -20,13 +20,16 @@ jobs:
           IMG_PROP: ${{ secrets.IMG_PROP }}
         run: |
           python3 << 'EOF'
-          import json, os, urllib.request, urllib.error
+          import json, os, urllib.request, hashlib, mimetypes, datetime
 
-          TOKEN   = os.environ["NOTION_TOKEN"]
-          DB_ID   = os.environ["NOTION_DB_ID"].replace("-", "")
-          DB_ID_F = f"{DB_ID[:8]}-{DB_ID[8:12]}-{DB_ID[12:16]}-{DB_ID[16:20]}-{DB_ID[20:]}"
+          TOKEN    = os.environ["NOTION_TOKEN"]
+          DB_ID    = os.environ["NOTION_DB_ID"].replace("-", "")
+          DB_ID_F  = f"{DB_ID[:8]}-{DB_ID[8:12]}-{DB_ID[12:16]}-{DB_ID[16:20]}-{DB_ID[20:]}"
           DATE_PROP = os.environ.get("DATE_PROP", "날짜")
           IMG_PROP  = os.environ.get("IMG_PROP",  "파일과 미디어")
+
+          IMG_DIR = "notion/img_cal/imgs"
+          os.makedirs(IMG_DIR, exist_ok=True)
 
           headers = {
               "Authorization": f"Bearer {TOKEN}",
@@ -34,23 +37,21 @@ jobs:
               "Content-Type": "application/json",
           }
 
-          # DB 메타 가져오기
+          # DB 메타
           req = urllib.request.Request(
-              f"https://api.notion.com/v1/databases/{DB_ID_F}",
-              headers=headers
+              f"https://api.notion.com/v1/databases/{DB_ID_F}", headers=headers
           )
           with urllib.request.urlopen(req) as r:
               meta = json.loads(r.read())
           db_title = meta.get("title", [{}])[0].get("plain_text", "Notion DB")
 
-          # 페이지 전체 가져오기 (페이지네이션)
+          # 전체 페이지 가져오기
           results = []
           body = {"page_size": 100}
           while True:
-              data = json.dumps(body).encode()
               req = urllib.request.Request(
                   f"https://api.notion.com/v1/databases/{DB_ID_F}/query",
-                  data=data, headers=headers, method="POST"
+                  data=json.dumps(body).encode(), headers=headers, method="POST"
               )
               with urllib.request.urlopen(req) as r:
                   resp = json.loads(r.read())
@@ -58,6 +59,42 @@ jobs:
               if not resp.get("has_more"):
                   break
               body["start_cursor"] = resp["next_cursor"]
+
+          def download_img(url, page_id):
+              """이미지를 레포에 저장하고 로컬 경로 반환"""
+              # URL 해시로 파일명 생성 (중복 방지)
+              name = hashlib.md5(url.encode()).hexdigest()[:12]
+              # 확장자 추측
+              ext = ".jpg"
+              for e in [".png", ".gif", ".webp", ".jpeg"]:
+                  if e in url.lower():
+                      ext = e
+                      break
+              local_path = f"{IMG_DIR}/{name}{ext}"
+              web_path = f"imgs/{name}{ext}"
+
+              # 이미 다운로드된 파일이면 스킵
+              if os.path.exists(local_path):
+                  return web_path
+
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                  with urllib.request.urlopen(req, timeout=15) as r:
+                      data = r.read()
+                  # Content-Type으로 확장자 재확인
+                  ct = r.headers.get("Content-Type", "")
+                  if "png" in ct:   ext = ".png"
+                  elif "gif" in ct: ext = ".gif"
+                  elif "webp" in ct: ext = ".webp"
+                  local_path = f"{IMG_DIR}/{name}{ext}"
+                  web_path = f"imgs/{name}{ext}"
+                  with open(local_path, "wb") as f:
+                      f.write(data)
+                  print(f"  ✅ 다운로드: {web_path}")
+                  return web_path
+              except Exception as e:
+                  print(f"  ⚠️ 이미지 다운로드 실패: {e}")
+                  return None
 
           entries = []
           for page in results:
@@ -76,42 +113,57 @@ jobs:
               if not date:
                   continue
 
-              # 이미지 URL 추출
-              imgs = []
+              # 이미지 다운로드
+              imgs_local = []
               ip = props.get(IMG_PROP, {})
               if ip.get("type") == "files":
                   for f in ip.get("files", []):
+                      url = None
                       if f.get("type") == "external":
-                          imgs.append(f["external"]["url"])
+                          url = f["external"]["url"]
                       elif f.get("type") == "file":
-                          imgs.append(f["file"]["url"])  # 만료 URL이지만 일단 저장
+                          url = f["file"]["url"]   # 서명된 임시 URL — 지금 바로 다운로드
+                      if url:
+                          local = download_img(url, page["id"])
+                          if local:
+                              imgs_local.append(local)
 
-              # 제목 추출
+              # 제목
               title = "(제목 없음)"
               for v in props.values():
                   if v.get("type") == "title" and v.get("title"):
                       title = "".join(t.get("plain_text", "") for t in v["title"])
                       break
 
-              entries.append({"date": date, "imgs": imgs, "title": title})
+              entries.append({"date": date, "imgs": imgs_local, "title": title})
+
+          # 오래된 이미지 정리 (현재 사용 중인 것만 남기기)
+          used = set()
+          for e in entries:
+              for img in e["imgs"]:
+                  used.add(os.path.basename(img))
+          if os.path.exists(IMG_DIR):
+              for f in os.listdir(IMG_DIR):
+                  if f not in used:
+                      os.remove(os.path.join(IMG_DIR, f))
+                      print(f"  🗑️ 삭제: {f}")
 
           output = {
               "dbTitle": db_title,
-              "updatedAt": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+              "updatedAt": datetime.datetime.utcnow().isoformat() + "Z",
               "entries": entries
           }
 
-          os.makedirs("notion/img_cal", exist_ok=True)
           with open("notion/img_cal/data.json", "w", encoding="utf-8") as f:
               json.dump(output, f, ensure_ascii=False, indent=2)
 
-          print(f"✅ {len(entries)}개 항목 저장 완료")
+          print(f"\n✅ 완료: {len(entries)}개 항목")
           EOF
 
-      - name: data.json 커밋 & 푸시
+      - name: 커밋 & 푸시
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add notion/img_cal/data.json
-          git diff --cached --quiet || git commit -m "🔄 Notion 데이터 동기화 $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git add notion/img_cal/data.json notion/img_cal/imgs/
+          git diff --cached --quiet || git commit -m "🔄 Notion 동기화 $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
